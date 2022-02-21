@@ -63,7 +63,10 @@ data Bool : Set where
 -}
 
 _⊕_ : Bool → Bool → Bool
-b ⊕ b' = {!!}
+true ⊕ true = true
+true ⊕ false = false
+false ⊕ true = false
+false ⊕ false = true
 
 {-
    You can test whether your definition computes correctly by using
@@ -95,7 +98,7 @@ data ℕ : Set where
 -}
 
 incr : ℕ → ℕ
-incr n = {!!}
+incr n = suc n
 
 {-
    Define a function that decrements a number by one. Give the definition
@@ -103,7 +106,8 @@ incr n = {!!}
 -}
 
 decr : ℕ → ℕ
-decr n = {!!}
+decr zero = zero
+decr (suc n) = n
 
 {-
    Define a function that triples the value of a given number.
@@ -111,7 +115,8 @@ decr n = {!!}
 -}
 
 triple : ℕ → ℕ
-triple n = {!!}
+triple zero = zero
+triple (suc n) = suc (suc (suc (triple n)))
 
 
 ----------------
@@ -142,7 +147,8 @@ infixl 7  _*_
 -}
 
 _^_ : ℕ → ℕ → ℕ
-m ^ n = {!!}
+m ^ zero = 1
+m ^ suc n = m * (m ^ n)
 
 infixl 8  _^_
 
@@ -178,7 +184,9 @@ infixl 20 _I
 -}
 
 b-incr : Bin → Bin
-b-incr b = {!!}
+b-incr ⟨⟩ = ⟨⟩ I
+b-incr (b O) = b I
+b-incr (b I) = (b-incr b) O
 
 
 ----------------
@@ -195,10 +203,13 @@ b-incr b = {!!}
 -}
 
 to : ℕ → Bin
-to n = {!!}
+to zero = ⟨⟩ O
+to (suc n) = b-incr (to n)
 
 from : Bin → ℕ
-from b = {!!}
+from ⟨⟩ = 0
+from (b O) = 2 * (from b)
+from (b I) = 1 + 2 * (from b)
 
 
 ----------------
@@ -219,6 +230,7 @@ data Even : ℕ → Set where
 
 data Even₂ : Bin → Set where
   {- EXERCISE: add the constructors for this inductive predicate here -}
+  even₂ : {b : Bin} -> Even₂ (b O)
 
 
 ----------------
@@ -231,7 +243,11 @@ data Even₂ : Bin → Set where
 -}
 
 to-even : {n : ℕ} → Even n → Even₂ (to n)
-to-even p = {!!}
+to-even even-z = even₂
+to-even (even-ss p) = to-even-aux (to-even p)
+   where
+      to-even-aux : {b : Bin} → Even₂ b → Even₂ (b-incr (b-incr b))
+      to-even-aux even₂ = even₂
 
 
 ----------------
@@ -253,6 +269,10 @@ to-even p = {!!}
 
 data NonEmptyBin : Bin → Set where
   {- EXERCISE: add the constructors for this inductive predicate here -}
+  zero₂ : NonEmptyBin (⟨⟩ O)
+  one₂ : NonEmptyBin (⟨⟩ I)
+  _o : {b : Bin} → NonEmptyBin b → NonEmptyBin (b O)
+  _i : {b : Bin} → NonEmptyBin b → NonEmptyBin (b I)
 
 {-
    To verify that `NonEmptyBin ⟨⟩` is indeed not inhabited as intended,
@@ -262,8 +282,9 @@ data NonEmptyBin : Bin → Set where
 
 data ⊥ : Set where
 
+{- Explanation: with this code, Agda will complain if `NonEmptyBin ⟨⟩` is inhabited. -}
 ⟨⟩-empty : NonEmptyBin ⟨⟩ → ⊥
-⟨⟩-empty p = {!!}
+⟨⟩-empty ()
 
 
 ----------------
@@ -280,7 +301,10 @@ data ⊥ : Set where
 -}
 
 from-ne : (b : Bin) → NonEmptyBin b → ℕ
-from-ne b p = {!!}
+from-ne (.⟨⟩ O) zero₂ = 0
+from-ne (b O) (p o) = 2 * from-ne b p
+from-ne (.⟨⟩ I) one₂ = 1
+from-ne (b I) (p i) = 1 + 2 * from-ne b p
 
 
 -----------------
@@ -313,7 +337,8 @@ infixr 5 _∷_
 -}
 
 map : {A B : Set} → (A → B) → List A → List B
-map f xs = {!!}
+map f [] = []
+map f (x ∷ xs) = f x ∷ map f xs
 
 
 -----------------
@@ -325,7 +350,8 @@ map f xs = {!!}
 -}
 
 length : {A : Set} → List A → ℕ
-length xs = {!!}
+length [] = 0
+length (x ∷ xs) = 1 + length xs
 
 -----------------
 -- Exercise 12 --
@@ -346,7 +372,8 @@ data _≡ᴺ_ : ℕ → ℕ → Set where
 -}
 
 map-≡ᴺ : {A B : Set} {f : A → B} → (xs : List A) → length xs ≡ᴺ length (map f xs)
-map-≡ᴺ xs = {!!}
+map-≡ᴺ [] = z≡ᴺz
+map-≡ᴺ (x ∷ xs) = s≡ᴺs (map-≡ᴺ xs)
 
 
 -----------------
@@ -371,6 +398,8 @@ infix 4 _≤_
 
 data _≤ᴸ_ {A : Set} : List A → List A → Set where
   {- EXERCISE: add the constructors for this inductive relation here -}
+  []≤ᴸxs : {xs : List A} → [] ≤ᴸ xs
+  xs≤ᴸys : {xs ys : List A} {x y : A} → xs ≤ᴸ ys → x ∷ xs ≤ᴸ y ∷ ys
 
 infix 4 _≤ᴸ_
 
@@ -385,10 +414,12 @@ infix 4 _≤ᴸ_
 -}
 
 length-≤ᴸ-≦ : {A : Set} {xs ys : List A} → xs ≤ᴸ ys → length xs ≤ length ys
-length-≤ᴸ-≦ p = {!!}
+length-≤ᴸ-≦ []≤ᴸxs = z≤n
+length-≤ᴸ-≦ (xs≤ᴸys p) = s≤s (length-≤ᴸ-≦ p)
 
 length-≤-≦ᴸ : {A : Set} (xs ys : List A) → length xs ≤ length ys → xs ≤ᴸ ys
-length-≤-≦ᴸ xs ys p = {!!}
+length-≤-≦ᴸ [] ys z≤n = []≤ᴸxs
+length-≤-≦ᴸ (x ∷ xs) (y ∷ ys) (s≤s p) = xs≤ᴸys (length-≤-≦ᴸ xs ys p)  
 
 
 -----------------
@@ -405,3 +436,4 @@ length-≤-≦ᴸ xs ys p = {!!}
    - "less than or equal" order
    - show that `from` takes even numbers to even numbers
 -}
+  
