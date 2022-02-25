@@ -101,13 +101,16 @@ postulate
 -}
 
 +-identityʳ : (n : ℕ) → n + zero ≡ n
-+-identityʳ n = {!!}
++-identityʳ zero = refl
++-identityʳ (suc n) = cong suc (+-identityʳ n)
 
 +-identityˡ : (n : ℕ) → zero + n ≡ n
-+-identityˡ n = {!!}
++-identityˡ zero = refl
++-identityˡ (suc n) = cong suc (+-identityˡ n)
 
 +-suc : (n m : ℕ) → n + (suc m) ≡ suc (n + m)
-+-suc n m = {!!}
++-suc zero m = refl
++-suc (suc n) m = cong suc (+-suc n m)
 
 
 ----------------
@@ -141,7 +144,9 @@ data Maybe (A : Set) : Set where
   nothing : Maybe A
 
 lookup : {A : Set} {n : ℕ} → Vec A n → ℕ → Maybe A
-lookup xs i = {!!}
+lookup [] i = nothing
+lookup (x ∷ xs) zero = just x
+lookup (x ∷ xs) (suc i) = lookup xs i
 
 
 ----------------
@@ -178,8 +183,13 @@ lookup-totalᵀ : {n : ℕ}
               → (i : ℕ)
               → i < n                           -- `i` in `{0,1,...,n-1}`
               → lookup xs i ≡ just ⋆
-             
-lookup-totalᵀ xs i p = {!!}
+
+x≡⋆ : {x : ⊤} → x ≡ ⋆
+x≡⋆ {⋆} = refl
+
+            
+lookup-totalᵀ (x ∷ xs) zero _ = cong just x≡⋆
+lookup-totalᵀ {suc n} (x ∷ xs) (suc i) (s≤s p) = lookup-totalᵀ {n} xs i p
 
 {-
    Note: In the standard library, `⊤` is defined as a record type. Here
@@ -218,7 +228,8 @@ data Fin : ℕ → Set where
   suc  : {n : ℕ} (i : Fin n) → Fin (suc n)
 
 safe-lookup : {A : Set} {n : ℕ} → Vec A n → Fin n → A
-safe-lookup xs i = {!!}
+safe-lookup (x ∷ _) zero = x
+safe-lookup (x ∷ xs) (suc i) = safe-lookup xs i
 
 
 ----------------
@@ -238,8 +249,15 @@ safe-lookup xs i = {!!}
    the correct type, the yellow highlighting below will disappear.
 -}
 
-nat-to-fin : {!!}
-nat-to-fin = {!!}
+n≤s : {m n : ℕ} → n ≤ m → n ≤ suc m
+n≤s {zero} z≤n = z≤n
+n≤s {suc m} z≤n = z≤n {suc (suc m)}
+n≤s (s≤s p) = s≤s (n≤s p)
+
+nat-to-fin : {m : ℕ} → (n : ℕ) → (p : n < m) → Fin m
+nat-to-fin {suc zero} zero p = zero
+nat-to-fin {suc (suc m)} zero p = zero
+nat-to-fin (suc n) (s≤s p) = suc (nat-to-fin n p)
 
 lookup-correct : {A : Set} {n : ℕ}
                → (xs : Vec A n)
@@ -247,7 +265,10 @@ lookup-correct : {A : Set} {n : ℕ}
                → (p : i < n)
                → lookup xs i ≡ just (safe-lookup xs (nat-to-fin i p))
 
-lookup-correct x i p = {!!}
+lookup-correct (_∷_ {zero} x xs) zero p = refl
+lookup-correct (_∷_ {suc zero} x xs) zero p = refl
+lookup-correct (_∷_ {suc (suc n)} x xs) zero p = refl
+lookup-correct (x ∷ xs) (suc i) (s≤s p) = lookup-correct xs i p
 
 
 ----------------
@@ -260,7 +281,8 @@ lookup-correct x i p = {!!}
 -}
 
 take-n : {A : Set} {n m : ℕ} → Vec A (n + m) → Vec A n
-take-n xs = {!!}
+take-n {n = zero} xs = []
+take-n {n = suc n} (x ∷ xs) = x ∷ take-n xs
 
 
 ----------------
