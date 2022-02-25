@@ -230,7 +230,7 @@ data Even : ℕ → Set where
 
 data Even₂ : Bin → Set where
   {- EXERCISE: add the constructors for this inductive predicate here -}
-  even₂ : {b : Bin} -> Even₂ (b O)
+  even₂ : {b : Bin} → Even₂ (b O)
 
 
 ----------------
@@ -245,10 +245,9 @@ data Even₂ : Bin → Set where
 to-even : {n : ℕ} → Even n → Even₂ (to n)
 to-even even-z = even₂
 to-even (even-ss p) = to-even-aux (to-even p)
-   where
-      to-even-aux : {b : Bin} → Even₂ b → Even₂ (b-incr (b-incr b))
-      to-even-aux even₂ = even₂
-
+  where
+    to-even-aux : {b : Bin} → Even₂ b → Even₂ (b-incr (b-incr b))
+    to-even-aux even₂ = even₂
 
 ----------------
 -- Exercise 8 --
@@ -436,4 +435,49 @@ length-≤-≦ᴸ (x ∷ xs) (y ∷ ys) (s≤s p) = xs≤ᴸys (length-≤-≦�
    - "less than or equal" order
    - show that `from` takes even numbers to even numbers
 -}
-  
+
+
+_+₂_ : Bin → Bin → Bin
+⟨⟩ +₂ c = c
+b +₂ ⟨⟩ = b
+b O +₂ c O = (b +₂ c) O
+b O +₂ c I = (b +₂ c) I
+b I +₂ c O = (b +₂ c) I
+b I +₂ c I = b-incr (b-incr ((b +₂ c) O))
+
+_*₂_ : Bin → Bin → Bin
+⟨⟩ *₂ c = ⟨⟩
+b *₂ ⟨⟩ = ⟨⟩
+b O *₂ c O = (b *₂ c) O O
+b O *₂ c I = (b *₂ c) O O +₂ b O
+b I *₂ c O = (b *₂ c) O O +₂ c O
+b I *₂ c I = (b *₂ c) O O +₂ (b +₂ c) I
+
+infixl 5 _+₂_
+infixl 6 _*₂_
+
+
+data _≡²_ : Bin → Bin → Set where
+  ⟨⟩≡²⟨⟩ : ⟨⟩ ≡² ⟨⟩
+  O≡²O   : {b c : Bin} → b ≡² c → b O ≡² c O
+  I≡²I   : {b c : Bin} → b ≡² c → b I ≡² c I
+
+infix 4 _≡²_
+
+
+data _≤²_ : Bin → Bin → Set where
+  ⟨⟩≤²b : {b : Bin} → ⟨⟩ ≤² b
+  O≤²O  : {b c : Bin} → b ≤² c → b O ≤² c O
+  O≤²I  : {b c : Bin} → b ≤² c → b O ≤² c I
+  I≤²I  : {b c : Bin} → b ≤² c → b I ≤² c I
+
+infix 4 _≤²_
+
+sum-even : {n m : ℕ} → Even n → Even m → Even (n + m)
+sum-even even-z q = q
+sum-even (even-ss p) q = even-ss (sum-even p q)
+
+from-even : {b : Bin} → Even₂ b → Even (from b)
+from-even even₂ = {!   !}
+
+ 
