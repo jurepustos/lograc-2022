@@ -255,8 +255,7 @@ n≤s {suc m} z≤n = z≤n {suc (suc m)}
 n≤s (s≤s p) = s≤s (n≤s p)
 
 nat-to-fin : {m : ℕ} → (n : ℕ) → (p : n < m) → Fin m
-nat-to-fin {suc zero} zero p = zero
-nat-to-fin {suc (suc m)} zero p = zero
+nat-to-fin zero (s≤s p) = zero
 nat-to-fin (suc n) (s≤s p) = suc (nat-to-fin n p)
 
 lookup-correct : {A : Set} {n : ℕ}
@@ -265,9 +264,7 @@ lookup-correct : {A : Set} {n : ℕ}
                → (p : i < n)
                → lookup xs i ≡ just (safe-lookup xs (nat-to-fin i p))
 
-lookup-correct (_∷_ {zero} x xs) zero p = refl
-lookup-correct (_∷_ {suc zero} x xs) zero p = refl
-lookup-correct (_∷_ {suc (suc n)} x xs) zero p = refl
+lookup-correct (x ∷ xs) zero (s≤s p) = refl
 lookup-correct (x ∷ xs) (suc i) (s≤s p) = lookup-correct xs i p
 
 
@@ -295,8 +292,32 @@ take-n {n = suc n} (x ∷ xs) = x ∷ take-n xs
    by recursion. Use `take-n` and equational reasoning instead.
 -}
 
++-comm : ∀ (m n : ℕ) → m + n ≡ n + m
++-comm m zero =
+  begin
+    m + zero
+  ≡⟨ +-identityʳ m ⟩
+    m
+  ≡⟨⟩
+    zero + m
+  ∎
+  
++-comm m (suc n) =
+  begin
+    m + suc n
+  ≡⟨ +-suc m n ⟩
+    suc (m + n)
+  ≡⟨ cong suc (+-comm m n) ⟩
+    suc (n + m)
+  ≡⟨⟩
+    suc n + m
+  ∎
+
 take-n' : {A : Set} {n m : ℕ} → Vec A (m + n) → Vec A n
-take-n' xs = {!!}
+take-n' {n = n} {m = m} xs = take-n (vec-len-eq xs (+-comm m n))
+  where
+    vec-len-eq : {A : Set} {n m : ℕ} → Vec A n → n ≡ m → Vec A m
+    vec-len-eq xs refl = xs
 
 
 ----------------
@@ -309,7 +330,8 @@ take-n' xs = {!!}
 -}
 
 vec-list : {A : Set} {n : ℕ} → Vec A n → List A
-vec-list xs = {!!}
+vec-list [] = []
+vec-list (x ∷ xs) = x ∷ vec-list xs
 
 {-
    Define a function from lists to vectors that is identity on the
@@ -319,8 +341,9 @@ vec-list xs = {!!}
    natural number specifying the length of the returned vector.
 -}
 
-list-vec : {A : Set} → (xs : List A) → Vec A {!!}
-list-vec xs = {!!}
+list-vec : {A : Set} → (xs : List A) → Vec A (length xs)
+list-vec [] = []
+list-vec (x ∷ xs) = x ∷ list-vec xs
 
 
 ----------------
@@ -336,7 +359,13 @@ vec-list-length : {A : Set} {n : ℕ}
                 → (xs : Vec A n)
                 → n ≡ length (vec-list xs)
                 
-vec-list-length xs = {!!}
+vec-list-length [] = refl
+vec-list-length {n = suc n} (x ∷ xs) =
+  begin
+    suc n 
+  ≡⟨ cong suc (vec-list-length xs) ⟩ 
+    length (x ∷ vec-list xs)
+  ∎
 
 
 ----------------
@@ -365,8 +394,17 @@ Matrix A m n = Vec (Vec A n) m
    of two vectors of the same length.
 -}
 
+infixl 6 _+ⱽ_
+
+_+ⱽ_ : {n : ℕ} → Vec ℕ n → Vec ℕ n → Vec ℕ n
+[] +ⱽ [] = []
+(x ∷ xs) +ⱽ (y ∷ ys) = x + y ∷ xs +ⱽ ys
+
+infixl 6 _+ᴹ_ 
+
 _+ᴹ_ : {m n : ℕ} → Matrix ℕ m n → Matrix ℕ m n → Matrix ℕ m n
-xss +ᴹ yss = {!!}
+[] +ᴹ [] = []
+(xs ∷ xss) +ᴹ (ys ∷ yss) = xs +ⱽ ys ∷ xss +ᴹ yss
 
 
 -----------------------------
@@ -391,10 +429,26 @@ xss +ᴹ yss = {!!}
    Observe that you have to prove equality between functions.
 -}
 
+list-vec-list-id : {A : Set} → (xs : List A) → vec-list (list-vec xs) ≡ id xs
+list-vec-list-id [] = refl
+list-vec-list-id (x ∷ xs) = 
+  begin
+    x ∷ vec-list (list-vec xs) 
+  ≡⟨ cong (_∷_ x) (list-vec-list-id xs) ⟩ 
+    x ∷ id xs
+  ≡⟨⟩
+    id (x ∷ xs)
+  ∎
+
 list-vec-list : {A : Set}
               → vec-list ∘ list-vec ≡ id {A = List A}
-              
-list-vec-list = {!!}
+
+list-vec-list = 
+  begin
+    vec-list ∘ list-vec 
+  ≡⟨ fun-ext list-vec-list-id ⟩ 
+    id
+  ∎
 
 
 -----------------
@@ -411,8 +465,17 @@ list-vec-list = {!!}
    in terms of the transpose of the submatrix without the first row.
 -}
 
+populate-vec : {A : Set} (n : ℕ) → A → Vec A n
+populate-vec zero x = []
+populate-vec (suc n) x = x ∷ populate-vec n x
+
+insert-column : {A : Set} {m n : ℕ} → Vec A m → Matrix A m n → Matrix A m (suc n)
+insert-column [] [] = []
+insert-column (x ∷ c) (xs ∷ xss) = (x ∷ xs) ∷ insert-column c xss
+ 
 transpose : {A : Set} {m n : ℕ} → Matrix A m n → Matrix A n m
-transpose xss = {!!}
+transpose {n = n} [] = populate-vec n []
+transpose (xs ∷ xss) = insert-column xs (transpose xss)
 
 
 -----------------
@@ -746,3 +809,4 @@ vec-list-vec = {!!}
 -----------------------------------
 -----------------------------------
 
+ 
