@@ -513,8 +513,16 @@ data _</≡/>_ (n m : ℕ) : Set where
    PLFA (https://plfa.inf.ed.ac.uk/Decidable/) for more details.
 -}
 
+s</≡/>s : {n m : ℕ} → n </≡/> m → suc n </≡/> suc m
+s</≡/>s (n<m p) = n<m (s≤s p)
+s</≡/>s (n≡m p) = n≡m (cong suc p)
+s</≡/>s (n>m p) = n>m (s≤s p)
+
 test-</≡/> : (n m : ℕ) → n </≡/> m
-test-</≡/> n m = {!!}
+test-</≡/> zero zero = n≡m refl
+test-</≡/> zero (suc m) = n<m (s≤s z≤n)
+test-</≡/> (suc n) zero = n>m (s≤s z≤n)
+test-</≡/> (suc n) (suc m) = s</≡/>s (test-</≡/> n m)
 
 
 -----------------
@@ -568,7 +576,11 @@ data Tree (A : Set) : Set where
 -}
 
 insert : Tree ℕ → ℕ → Tree ℕ
-insert t n = {!!}
+insert empty n = node empty n empty
+insert (node t x u) n with test-</≡/> n x
+insert (node t x u) n | n<m p = node (insert t n) x u
+insert (node t x u) n | n≡m p = node t x u
+insert (node t x u) n | n>m p = node t x (insert u n)
 
 {-
    As a sanity check, prove that inserting 12, 27, and 52 into the above
@@ -578,17 +590,22 @@ insert t n = {!!}
 insert-12 : insert (node (node empty 22 (node empty 32 empty)) 42 (node empty 52 empty)) 12
             ≡
             node (node (node empty 12 empty) 22 (node empty 32 empty)) 42 (node empty 52 empty)
-insert-12 = {!!}
+insert-12 = 
+  begin
+    insert (node (node empty 22 (node empty 32 empty)) 42 (node empty 52 empty)) 12
+  ≡⟨ refl ⟩
+    node (node (node empty 12 empty) 22 (node empty 32 empty)) 42 (node empty 52 empty)
+  ∎
 
 insert-27 : insert (node (node empty 22 (node empty 32 empty)) 42 (node empty 52 empty)) 27
             ≡
             node (node empty 22 (node (node empty 27 empty) 32 empty)) 42 (node empty 52 empty)
-insert-27 = {!!}            
+insert-27 = refl            
 
 insert-52 : insert (node (node empty 22 (node empty 32 empty)) 42 (node empty 52 empty)) 52
             ≡
             node (node empty 22 (node empty 32 empty)) 42 (node empty 52 empty)
-insert-52 = {!!}
+insert-52 = refl
 
 
 -----------------
@@ -605,7 +622,6 @@ insert-52 = {!!}
 
 data _∈_ (n : ℕ) : Tree ℕ → Set where
   {- EXERCISE: the constructors for the `∈` relation go here -}
-
 
 {-
    Prove that the tree returned by the `insert` function indeed
