@@ -249,10 +249,6 @@ safe-lookup (x ∷ xs) (suc i) = safe-lookup xs i
    the correct type, the yellow highlighting below will disappear.
 -}
 
-n≤s : {m n : ℕ} → n ≤ m → n ≤ suc m
-n≤s {zero} z≤n = z≤n
-n≤s {suc m} z≤n = z≤n {suc (suc m)}
-n≤s (s≤s p) = s≤s (n≤s p)
 
 nat-to-fin : {m : ℕ} → (n : ℕ) → (p : n < m) → Fin m
 nat-to-fin zero (s≤s p) = zero
@@ -291,6 +287,7 @@ take-n {n = suc n} (x ∷ xs) = x ∷ take-n xs
    a vector of length `m + n`. Hint: Do not define this function
    by recursion. Use `take-n` and equational reasoning instead.
 -}
+
 
 +-comm : ∀ (m n : ℕ) → m + n ≡ n + m
 +-comm m zero =
@@ -622,6 +619,7 @@ insert-52 = refl
 
 data _∈_ (n : ℕ) : Tree ℕ → Set where
   {- EXERCISE: the constructors for the `∈` relation go here -}
+  
 
 {-
    Prove that the tree returned by the `insert` function indeed
@@ -729,11 +727,25 @@ data IsBST : Tree ℕ → Set where
    Hint: You might find it helpful to prove the transitivity of `<∞`.
 -}
 
+s<∞s : {n m : ℕ} → [ n ] <∞ [ m ] → [ suc n ] <∞ [ suc m ]
+s<∞s ([]<[] p) = []<[] (s≤s p)
+
+trans-<∞ : {x y z : ℕ∞} → x <∞ y → y <∞ z → x <∞ z
+trans-<∞ -∞<n p = -∞<n
+trans-<∞ {[ zero ]} {[ suc m ]} {[ suc o ]} ([]<[] p) ([]<[] q) = 
+  []<[] (s≤s z≤n)
+trans-<∞ {[ suc n ]} {[ suc m ]} {[ suc o ]} ([]<[] (s≤s p)) ([]<[] (s≤s q)) = 
+  s<∞s (trans-<∞ ([]<[] p) ([]<[] q))
+trans-<∞ ([]<[] (s≤s z≤n)) n<+∞ = n<+∞
+trans-<∞ ([]<[] (s≤s (s≤s p))) n<+∞ = n<+∞
+trans-<∞ n<+∞ n<+∞ = n<+∞
+
 isbst-rec-<∞ : {lower upper : ℕ∞} {t : Tree ℕ}
              → IsBST-rec lower upper t
              → lower <∞ upper
              
-isbst-rec-<∞ p = {!!}
+isbst-rec-<∞ (empty-bst p) = p
+isbst-rec-<∞ (node-bst p q) = trans-<∞ (isbst-rec-<∞ p) (isbst-rec-<∞ q)
 
 {-
    Disclaimer: The `(p : lower <∞ upper)` proof witness in the `empty`
@@ -781,8 +793,10 @@ bst = node-bst
    preserving also the recursively defined `IsBST-rec` relation.
 -}
 
+
 insert-bst : (t : Tree ℕ) → (n : ℕ) → IsBST t → IsBST (insert t n)
-insert-bst t n p = {!!}
+insert-bst empty n p = node-bst (empty-bst -∞<n) (empty-bst n<+∞)
+insert-bst (node t x u) n p = {!    !}
 
 
 -----------------
@@ -813,10 +827,33 @@ insert-bst t n p = {!!}
    on vectors, etc. So we suggest you leave this one for the very last.
 -}
 
+vec-list-vec-aux : {A : Set} {n : ℕ} 
+                 → (xs : Vec A n) 
+                 → Vec A (length (vec-list xs))
+vec-list-vec-aux [] = []
+vec-list-vec-aux (x ∷ xs) = x ∷ vec-list-vec-aux xs
+
+vec-list-vec-eq : {A : Set} {n : ℕ}
+                → (xs : Vec A n)
+                → list-vec (vec-list xs) ≡ vec-list-vec-aux xs
+
+vec-list-vec-eq [] = refl
+vec-list-vec-eq (x ∷ xs) = 
+  begin
+    x ∷ list-vec (vec-list xs) 
+  ≡⟨ cong (_∷_ x) (vec-list-vec-eq xs) ⟩ 
+    x ∷ vec-list-vec-aux xs
+  ∎
+
 vec-list-vec : {A : Set} {n : ℕ}
-             → list-vec ∘ vec-list ≡ {!!}
+             → list-vec ∘ vec-list {A} {n} ≡ vec-list-vec-aux {A} {n}
                
-vec-list-vec = {!!}
+vec-list-vec =
+  begin
+    list-vec ∘ vec-list 
+  ≡⟨ fun-ext vec-list-vec-eq ⟩ 
+    vec-list-vec-aux
+  ∎
 
 
 -----------------------------------
@@ -825,4 +862,4 @@ vec-list-vec = {!!}
 -----------------------------------
 -----------------------------------
 
- 
+   
