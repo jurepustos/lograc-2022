@@ -793,11 +793,34 @@ bst = node-bst
    preserving also the recursively defined `IsBST-rec` relation.
 -}
 
+insert-bst-rec : (t : Tree ℕ) 
+               → (lower upper : ℕ∞) 
+               → (n : ℕ)
+               → (p : IsBST-rec lower upper t)
+               → (q : lower <∞ [ n ])
+               → (r : [ n ] <∞ upper) 
+               → IsBST-rec lower upper (insert t n)
+insert-bst-rec empty lower upper n p q r = node-bst (empty-bst q) (empty-bst r)
+insert-bst-rec (node t x u) lower upper n (node-bst p₁ p₂) q r with test-</≡/> n x
+insert-bst-rec (node t x u) lower upper n (node-bst p₁ p₂) q r | n<m s = 
+  node-bst 
+    (insert-bst-rec t lower [ x ] n p₁ q ([]<[] s)) 
+    p₂
+insert-bst-rec (node t x u) lower upper n (node-bst p₁ p₂) q r | n≡m s = node-bst p₁ p₂
+insert-bst-rec (node t x u) lower upper n (node-bst p₁ p₂) q r | n>m s = 
+  node-bst 
+    p₁ 
+    (insert-bst-rec u [ x ] upper n p₂ ([]<[] s) r)
+
 
 insert-bst : (t : Tree ℕ) → (n : ℕ) → IsBST t → IsBST (insert t n)
 insert-bst empty n p = node-bst (empty-bst -∞<n) (empty-bst n<+∞)
-insert-bst (node t x u) n p = {!    !}
-
+insert-bst (node t x u) n p with test-</≡/> n x
+insert-bst (node t x u) n (node-bst p q) | n<m r = 
+  node-bst (insert-bst-rec t -∞ [ x ] n p -∞<n ([]<[] r)) q
+insert-bst (node t x u) n (node-bst p q) | n≡m r = node-bst p q
+insert-bst (node t x u) n (node-bst p q) | n>m r = 
+  node-bst p (insert-bst-rec u [ x ] +∞ n q ([]<[] r) n<+∞)
 
 -----------------
 -- Exercise 17 --
@@ -847,7 +870,6 @@ vec-list-vec-eq (x ∷ xs) =
 
 vec-list-vec : {A : Set} {n : ℕ}
              → list-vec ∘ vec-list {A} {n} ≡ vec-list-vec-aux {A} {n}
-               
 vec-list-vec =
   begin
     list-vec ∘ vec-list 
@@ -862,4 +884,4 @@ vec-list-vec =
 -----------------------------------
 -----------------------------------
 
-   
+     
