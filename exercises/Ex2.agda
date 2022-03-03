@@ -645,7 +645,7 @@ insert-∈ empty n = leaf
 insert-∈ (node t x u) n with test-</≡/> n x
 insert-∈ (node t x u) n | n<m p = left-member p (insert-∈ t n)
 insert-∈ (node t x u) n | n≡m p = root-member p
-insert-∈ (node t x u) n | n>m p = right-member p (insert-∈ u nsa)
+insert-∈ (node t x u) n | n>m p = right-member p (insert-∈ u n)
 
 
 -----------------------------------
