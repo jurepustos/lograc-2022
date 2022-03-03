@@ -619,7 +619,10 @@ insert-52 = refl
 
 data _∈_ (n : ℕ) : Tree ℕ → Set where
   {- EXERCISE: the constructors for the `∈` relation go here -}
-  
+  leaf         : n ∈ node empty n empty
+  root-member  : {t u : Tree ℕ} {x : ℕ} → n ≡ x → n ∈ node t x u
+  left-member  : {t u : Tree ℕ} {x : ℕ} → n < x → n ∈ t → n ∈ node t x u
+  right-member : {t u : Tree ℕ} {x : ℕ} → n > x → n ∈ u → n ∈ node t x u
 
 {-
    Prove that the tree returned by the `insert` function indeed
@@ -638,7 +641,11 @@ data _∈_ (n : ℕ) : Tree ℕ → Set where
 -}
 
 insert-∈ : (t : Tree ℕ) → (n : ℕ) → n ∈ (insert t n)
-insert-∈ t n = {!!}
+insert-∈ empty n = leaf
+insert-∈ (node t x u) n with test-</≡/> n x
+insert-∈ (node t x u) n | n<m p = left-member p (insert-∈ t n)
+insert-∈ (node t x u) n | n≡m p = root-member p
+insert-∈ (node t x u) n | n>m p = right-member p (insert-∈ u nsa)
 
 
 -----------------------------------
